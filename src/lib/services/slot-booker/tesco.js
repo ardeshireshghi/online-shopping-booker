@@ -8,8 +8,8 @@ const player = require('../../audio/player');
 
 const TESCO_LOGIN_URL = 'https://secure.tesco.com/account/en-GB/login';
 const TESCO_DELIVERY_SLOT_URL = 'https://www.tesco.com/groceries/en-GB/slots/delivery';
-const BOOKING_MAX_RETRIES = 480;
-const BOOKING_ATTEMPTS_DELAY_SECONDS = 30;
+const BOOKING_MAX_RETRIES = 1000;
+const BOOKING_ATTEMPTS_DELAY_SECOND_RANGE = [20, 60];
 
 const Selectors = {
   LOGIN_FORM: '#sign-in-form',
@@ -84,6 +84,10 @@ const attemptBooking = async (page) => {
   return booking;
 };
 
+const randomWaitWithinRange = () => {
+  const [min, max] = BOOKING_ATTEMPTS_DELAY_SECOND_RANGE;
+  return (Math.random() * (max - min) + min);
+};
 const startBookingLoop = async (page) => {
   let retries = 0;
   let booking;
@@ -93,14 +97,16 @@ const startBookingLoop = async (page) => {
       await loginAndPrepareBookingSlotPage(page);
     }
 
+    console.pizza('This is attempt #', retries);
     booking = await attemptBooking(page);
 
     if (booking) {
       break;
     }
 
-    console.hourglass_flowing_sand(`Waiting ${BOOKING_ATTEMPTS_DELAY_SECONDS} seconds before trying again`);
-    await wait(BOOKING_ATTEMPTS_DELAY_SECONDS);
+    const waitingSeconds = randomWaitWithinRange();
+    console.hourglass_flowing_sand(`Waiting ${waitingSeconds} seconds before trying again`);
+    await wait(waitingSeconds);
     retries++;
   }
 
@@ -108,6 +114,7 @@ const startBookingLoop = async (page) => {
 };
 
 (async () => {
+  const startTime = Date.now();
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
 
@@ -128,7 +135,7 @@ const startBookingLoop = async (page) => {
       console.baguette_bread('Available slot found! Booking now. Details:', booking);
       await player.play(path.resolve(__dirname, '../..', 'audio', 'media', 'rooster.mp3'), {repeat: 6});
     } else {
-      console.red_circle(`Tried booking for ${BOOKING_MAX_RETRIES * BOOKING_ATTEMPTS_DELAY_SECONDS / 3600} hours. No available slots!`);
+      console.red_circle(`Tried booking a slot for ${((Date.now() - startTime) / 1000 / 3600).toFixed(2)} hours. No available slots!`);
     }
   } catch(err) {
     console.err('There was an error booking a slot', err);
