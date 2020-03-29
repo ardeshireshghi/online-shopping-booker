@@ -68,7 +68,7 @@ const gotoSlotPageLastTab = async (page) => {
   await lastSlotTabLink.click();
 };
 
-const loginAndPrepareBookingSlotPage = async (page) => {
+const loginAndGotoBookingSlotPage = async (page) => {
   await login(page, {
     username: process.env.TESCO_USERNAME,
     password: process.env.TESCO_PASSWORD
@@ -94,7 +94,7 @@ const startBookingLoop = async (page) => {
 
   while(retries < BOOKING_MAX_RETRIES) {
     if (page.url().includes(TESCO_LOGIN_URL)) {
-      await loginAndPrepareBookingSlotPage(page);
+      await loginAndGotoBookingSlotPage(page);
     }
 
     console.pizza('This is attempt #', retries);
@@ -118,7 +118,7 @@ const startBookingLoop = async (page) => {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
 
-  await loginAndPrepareBookingSlotPage(page);
+  await loginAndGotoBookingSlotPage(page);
 
   const alreadyBookedSlot = await page.$(Selectors.BOOKED_SLOT);
 
