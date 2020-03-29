@@ -1,0 +1,23 @@
+{
+  "name": "grocery-scraper",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.19.2",
+    "jsdom": "^16.2.1",
+    "lazy-console-emojis": "github:ardeshireshghi/lazy-console-emojis#master",
+    "node-fetch": "^2.6.0",
+    "puppeteer": "^2.1.1",
+    "tough-cookie": "^4.0.0"
+  },
+  "devDependencies": {
+    "dotenv": "^8.2.0"
+  }
+}
