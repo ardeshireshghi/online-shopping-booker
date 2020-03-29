@@ -84,11 +84,11 @@ const attemptBooking = async (page) => {
   return booking;
 };
 
-const randomWaitWithinRange = () => {
-  const [min, max] = BOOKING_ATTEMPTS_DELAY_SECOND_RANGE;
+const randomWaitWithinRange = (min, max) => {
   return (Math.random() * (max - min) + min);
 };
 const startBookingLoop = async (page) => {
+  const [minSeconds, maxSeconds] = BOOKING_ATTEMPTS_DELAY_SECOND_RANGE;
   let retries = 0;
   let booking;
 
@@ -104,7 +104,7 @@ const startBookingLoop = async (page) => {
       break;
     }
 
-    const waitingSeconds = randomWaitWithinRange();
+    const waitingSeconds = randomWaitWithinRange(minSeconds, maxSeconds);
     console.hourglass_flowing_sand(`Waiting ${waitingSeconds} seconds before trying again`);
     await wait(waitingSeconds);
     retries++;
