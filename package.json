@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "tesco": "node src/lib/services/slot-booker/tesco.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
