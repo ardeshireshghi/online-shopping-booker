@@ -9,7 +9,7 @@ const player = require('../../audio/player');
 const TESCO_LOGIN_URL = 'https://secure.tesco.com/account/en-GB/login';
 const TESCO_DELIVERY_SLOT_URL = 'https://www.tesco.com/groceries/en-GB/slots/delivery/';
 const BOOKING_MAX_RETRIES = 1000;
-const BOOKING_ATTEMPTS_DELAY_SECOND_RANGE = [20, 60];
+const BOOKING_ATTEMPTS_DELAY_SECOND_RANGE = [5, 15];
 
 const Selectors = {
   LOGIN_FORM: '#sign-in-form',
@@ -59,15 +59,12 @@ const bookSlotIfAvailable = async (page) => {
 };
 
 const gotoSlotPageLastTab = async (page) => {
-  const twoWeeksToday = new Date(Date.now() + 12096e5);
+  const twoWeeksToday = new Date();
+
+  // plust 15 instead of 14 to make sure mid-night date change is fine
+  twoWeeksToday.setDate(twoWeeksToday.getDate() + 15);
   const formattedTwoWeeksToday = twoWeeksToday.toISOString().split('T')[0];
   await page.goto(TESCO_DELIVERY_SLOT_URL + formattedTwoWeeksToday + '?slotGroup=4');
-
-  //const slotTabs = await page.$$(Selectors.SLOT_WEEKLY_TAB);
-  //const lastSlotTabLink = await slotTabs[slotTabs.length - 1].$('a');
-
-  //console.info('Looking at the last date and time range: %s', await lastSlotTabLink.evaluate(link => link.textContent));
-  //await lastSlotTabLink.click();
 };
 
 const loginAndGotoBookingSlotPage = async (page) => {
