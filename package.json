@@ -1,11 +1,10 @@
 {
-  "name": "grocery-scraper",
+  "name": "online-shopping-booker",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "tesco": "node src/lib/services/slot-booker/tesco.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "tesco": "node src/lib/services/slot-booker/tesco.js"
   },
   "keywords": [],
   "author": "",
