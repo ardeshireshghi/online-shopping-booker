@@ -1,11 +1,14 @@
 const puppeteer = require('puppeteer');
+const path = require('path');
 
 require('lazy-console-emojis/src/console');
 require('dotenv').config();
 
+const player = require('../../audio/player');
+
 const TESCO_LOGIN_URL = 'https://secure.tesco.com/account/en-GB/login';
 const TESCO_DELIVERY_SLOT_URL = 'https://www.tesco.com/groceries/en-GB/slots/delivery';
-const BOOKING_MAX_RETRIES = 240;
+const BOOKING_MAX_RETRIES = 480;
 const BOOKING_ATTEMPTS_DELAY_SECONDS = 30;
 
 const Selectors = {
@@ -38,11 +41,13 @@ const bookSlotIfAvailable = async (page) => {
   const lastAvailableSlot = allAvailableSlots[allAvailableSlots.length - 1];
 
   if (lastAvailableSlot) {
+    const booking = await lastAvailableSlot.evaluate(el => el.textContent);
     console.log(await lastAvailableSlot.evaluate(el => el.innerHTML));
-    await lastAvailableSlot.evaluate(el => el.querySelector('form').submit());
+    const slotFormSubmitBtn = await lastAvailableSlot.$('[type="submit"]');
+    await slotFormSubmitBtn.click();
 
     return {
-      booking: await lastAvailableSlot.evaluate(el => el.textContent)
+      booking
     };
   }
 
@@ -116,13 +121,18 @@ const startBookingLoop = async (page) => {
     return;
   }
 
-  const booking = await startBookingLoop(page);
+  try {
+    const booking = await startBookingLoop(page);
 
-  if (booking) {
-    console.baguette_bread('Available slot found! Booking now. Details:', booking);
-  } else {
-    console.red_circle(`Tried booking for ${BOOKING_MAX_RETRIES * BOOKING_ATTEMPTS_DELAY_SECONDS / 3600} hours. No available slots!`);
+    if (booking) {
+      console.baguette_bread('Available slot found! Booking now. Details:', booking);
+      await player.play(path.resolve(__dirname, '../..', 'audio', 'media', 'rooster.mp3'), {repeat: 6});
+    } else {
+      console.red_circle(`Tried booking for ${BOOKING_MAX_RETRIES * BOOKING_ATTEMPTS_DELAY_SECONDS / 3600} hours. No available slots!`);
+    }
+  } catch(err) {
+    console.err('There was an error booking a slot', err);
+  } finally {
+    await browser.close();
   }
-
-  await browser.close();
 })();
