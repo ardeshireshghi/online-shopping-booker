@@ -27,6 +27,19 @@ const slotGroups = {
 
 const wait = (seconds) => new Promise(resolve => setTimeout(resolve, seconds * 1000));
 
+const createPage = async browser => {
+  const page = await browser.newPage();
+  const viewPort = {
+    width: 1280,
+    height: 960
+  };
+
+  await page.setDefaultNavigationTimeout(0);
+  await page.setViewport(viewPort);
+
+  return page;
+};
+
 const login = async (page, { username, password }) => {
   page.goto(TESCO_LOGIN_URL);
 
@@ -49,28 +62,15 @@ const bookSlotIfAvailable = async (page) => {
     const booking = await lastAvailableSlot.evaluate(el => el.textContent);
     console.log(await lastAvailableSlot.evaluate(el => el.innerHTML));
 
-    try {
-      const slotFormSubmitBtn = await lastAvailableSlot.$('[type="submit"]');
-      await slotFormSubmitBtn.click();
+    const slotFormSubmitBtn = await lastAvailableSlot.$('[type="submit"]');
+    await slotFormSubmitBtn.click();
 
-      await wait(5);
+    await wait(5);
 
-      await page.screenshot({
-        path: `./screenshots/booking-${Date.now()}.png`,
-        fullPage: true
-      });
-
-    } catch(err) {
-      const screenshotFile = `error-${Date.now()}.png`;
-
-      console.error('Error submitting booking slot', err);
-      console.error('Saving screenshot to:', screenshotFile);
-
-      await page.screenshot({
-        path: `./screenshots/${screenshotFile}`,
-        fullPage: true
-      });
-    }
+    await page.screenshot({
+      path: `./screenshots/booking-${Date.now()}.png`,
+      fullPage: true
+    });
 
     return {
       booking
@@ -106,6 +106,10 @@ const loginAndGotoBookingSlotPage = async (page) => {
 const attemptBooking = async (page) => {
   await page.reload({ waitUntil: ['networkidle0', 'domcontentloaded'] });
 
+  if (page.url().includes(TESCO_LOGIN_URL)) {
+    await loginAndGotoBookingSlotPage(page);
+  }
+
   const { booking } = await bookSlotIfAvailable(page);
   return booking;
 };
@@ -116,15 +120,33 @@ const randomWaitWithinRange = (min, max) => {
 const startBookingLoop = async (page) => {
   const [minSeconds, maxSeconds] = BOOKING_ATTEMPTS_DELAY_SECOND_RANGE;
   let retries = 0;
+  let currentPage = page;
   let booking;
 
   while(retries < BOOKING_MAX_RETRIES) {
-    if (page.url().includes(TESCO_LOGIN_URL)) {
-      await loginAndGotoBookingSlotPage(page);
-    }
-
     console.pizza('This is attempt #', retries);
-    booking = await attemptBooking(page);
+
+    try {
+      booking = await attemptBooking(currentPage);
+    } catch(err) {
+      const screenshotFile = `error-${Date.now()}.png`;
+      await page.screenshot({
+        path: `./screenshots/${screenshotFile}`,
+        fullPage: true
+      });
+
+      if (err.message.includes('Execution context was destroyed')) {
+        console.log('Came across wierd error, recovering', currentPage.url());
+
+        const browser = await puppeteer.launch();
+        const page = await createPage(browser);
+        currentPage = page;
+
+        await loginAndGotoBookingSlotPage(currentPage);
+      } else {
+        throw err;
+      }
+    }
 
     if (booking) {
       break;
@@ -135,7 +157,7 @@ const startBookingLoop = async (page) => {
     await wait(waitingSeconds);
 
     if (retries % 5 === 0) {
-      await page.screenshot({
+      await currentPage.screenshot({
         path: `./screenshots/info-${Date.now()}.png`,
         fullPage: true
       });
@@ -150,14 +172,7 @@ const startBookingLoop = async (page) => {
 (async () => {
   const startTime = Date.now();
   const browser = await puppeteer.launch();
-  const page = await browser.newPage();
-  const viewPort = {
-    width: 1280,
-    height: 960
-  };
-
-  await page.setDefaultNavigationTimeout(0);
-  await page.setViewport(viewPort);
+  const page = await createPage(browser);
 
   await loginAndGotoBookingSlotPage(page);
 
@@ -179,7 +194,14 @@ const startBookingLoop = async (page) => {
       console.red_circle(`Tried booking a slot for ${((Date.now() - startTime) / 1000 / 3600).toFixed(2)} hours. No available slots!`);
     }
   } catch(err) {
-    console.error('There was an error booking a slot', err);
+    const screenshotFile = `error-${Date.now()}.png`;
+
+    await page.screenshot({
+      path: `./screenshots/${screenshotFile}`,
+      fullPage: true
+    });
+
+    console.error('Saving screenshot to:', screenshotFile);
    } finally {
     await browser.close();
   }
