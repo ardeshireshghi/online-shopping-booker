@@ -43,8 +43,25 @@ const bookSlotIfAvailable = async (page) => {
   if (lastAvailableSlot) {
     const booking = await lastAvailableSlot.evaluate(el => el.textContent);
     console.log(await lastAvailableSlot.evaluate(el => el.innerHTML));
-    const slotFormSubmitBtn = await lastAvailableSlot.$('[type="submit"]');
-    await slotFormSubmitBtn.click();
+
+    try {
+      const slotFormSubmitBtn = await lastAvailableSlot.$('[type="submit"]');
+      await slotFormSubmitBtn.click();
+    } catch(err) {
+      const screenshotFile = `error-${Date.now()}.png`;
+
+      console.error('Error submitting booking slot', err);
+      console.error('Saving screenshot to:', screenshotFile);
+
+      await page.screenshot({
+        path: `./screenshots/${screenshotFile}`,
+        fullPage: true
+      });
+
+      // Fallback (submit the form instead of clicking submit button)
+      const form = await lastAvailableSlot.$('form');
+      await form.evaluate(f => f.submit());
+    }
 
     return {
       booking
@@ -107,6 +124,13 @@ const startBookingLoop = async (page) => {
     console.hourglass_flowing_sand(`Waiting ${waitingSeconds} seconds before trying again`);
     await wait(waitingSeconds);
     retries++;
+
+    if (retries % 5 === 0) {
+      await page.screenshot({
+        path: `./screenshots/${Date.now()}.png`,
+        fullPage: true
+      });
+    }
   }
 
   return booking;
@@ -114,8 +138,11 @@ const startBookingLoop = async (page) => {
 
 (async () => {
   const startTime = Date.now();
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({
+    args: [`--window-size=1400,1200`]
+  });
   const page = await browser.newPage();
+  await page.setDefaultNavigationTimeout(0);
 
   await loginAndGotoBookingSlotPage(page);
 
@@ -137,8 +164,8 @@ const startBookingLoop = async (page) => {
       console.red_circle(`Tried booking a slot for ${((Date.now() - startTime) / 1000 / 3600).toFixed(2)} hours. No available slots!`);
     }
   } catch(err) {
-    console.err('There was an error booking a slot', err);
-  } finally {
+    console.error('There was an error booking a slot', err);
+   } finally {
     await browser.close();
   }
 })();
