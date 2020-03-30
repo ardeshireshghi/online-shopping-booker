@@ -65,7 +65,7 @@ const bookSlotIfAvailable = async (page) => {
     const slotFormSubmitBtn = await lastAvailableSlot.$('[type="submit"]');
     await slotFormSubmitBtn.click();
 
-    await wait(5);
+    await wait(10);
 
     await page.screenshot({
       path: `./screenshots/booking-${Date.now()}.png`,
