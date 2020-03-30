@@ -20,6 +20,11 @@ const Selectors = {
   SLOT_WEEKLY_TAB: '.slot-selector--week-tabheader'
 };
 
+const slotGroups = {
+  fixed: 1,
+  flex: 4
+};
+
 const wait = (seconds) => new Promise(resolve => setTimeout(resolve, seconds * 1000));
 
 const login = async (page, { username, password }) => {
@@ -47,6 +52,14 @@ const bookSlotIfAvailable = async (page) => {
     try {
       const slotFormSubmitBtn = await lastAvailableSlot.$('[type="submit"]');
       await slotFormSubmitBtn.click();
+
+      await wait(5);
+
+      await page.screenshot({
+        path: `./screenshots/booking-${Date.now()}.png`,
+        fullPage: true
+      });
+
     } catch(err) {
       const screenshotFile = `error-${Date.now()}.png`;
 
@@ -57,10 +70,6 @@ const bookSlotIfAvailable = async (page) => {
         path: `./screenshots/${screenshotFile}`,
         fullPage: true
       });
-
-      // Fallback (submit the form instead of clicking submit button)
-      const form = await lastAvailableSlot.$('form');
-      await form.evaluate(f => f.submit());
     }
 
     return {
@@ -76,12 +85,13 @@ const bookSlotIfAvailable = async (page) => {
 };
 
 const gotoSlotPageLastTab = async (page) => {
+  const slotGroup = slotGroups[process.env.SLOT_TYPE];
   const twoWeeksToday = new Date();
 
   // plust 15 instead of 14 to make sure mid-night date change is fine
   twoWeeksToday.setDate(twoWeeksToday.getDate() + 15);
   const formattedTwoWeeksToday = twoWeeksToday.toISOString().split('T')[0];
-  await page.goto(TESCO_DELIVERY_SLOT_URL + formattedTwoWeeksToday + '?slotGroup=4');
+  await page.goto(TESCO_DELIVERY_SLOT_URL + formattedTwoWeeksToday + `?slotGroup=${slotGroup}`);
 };
 
 const loginAndGotoBookingSlotPage = async (page) => {
@@ -123,14 +133,15 @@ const startBookingLoop = async (page) => {
     const waitingSeconds = randomWaitWithinRange(minSeconds, maxSeconds);
     console.hourglass_flowing_sand(`Waiting ${waitingSeconds} seconds before trying again`);
     await wait(waitingSeconds);
-    retries++;
 
     if (retries % 5 === 0) {
       await page.screenshot({
-        path: `./screenshots/${Date.now()}.png`,
+        path: `./screenshots/info-${Date.now()}.png`,
         fullPage: true
       });
     }
+
+    retries++;
   }
 
   return booking;
@@ -138,11 +149,15 @@ const startBookingLoop = async (page) => {
 
 (async () => {
   const startTime = Date.now();
-  const browser = await puppeteer.launch({
-    args: [`--window-size=1400,1200`]
-  });
+  const browser = await puppeteer.launch();
   const page = await browser.newPage();
+  const viewPort = {
+    width: 1280,
+    height: 960
+  };
+
   await page.setDefaultNavigationTimeout(0);
+  await page.setViewport(viewPort);
 
   await loginAndGotoBookingSlotPage(page);
 
