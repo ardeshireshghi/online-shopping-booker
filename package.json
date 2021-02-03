@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "tesco": "node src/lib/services/slot-booker/tesco.js"
+    "tesco": "node src/lib/services/slot-booker/tesco.js",
+    "oreilly": "node src/lib/services/oreilly/index.js"
   },
   "keywords": [],
   "author": "",

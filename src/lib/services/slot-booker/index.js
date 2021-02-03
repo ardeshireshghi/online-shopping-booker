@@ -11,7 +11,7 @@ const audioPlayer = require('../../audio/player');
 const creds = {
   username: process.env.TESCO_USERNAME,
   password: process.env.TESCO_PASSWORD
-}
+};
 
 const startBooking = async (page) => {
   const bookingManager = new BookingManager({

@@ -2,7 +2,6 @@ jest.mock('puppeteer');
 
 const puppeteer = require('puppeteer');
 
-
 jest.mock('../../../../../src/lib/utils/wait', () => ({
   wait: jest.fn(()=> Promise.resolve())
 }));
