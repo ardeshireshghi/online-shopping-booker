@@ -11,7 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "jsdom": "^16.2.1",
     "lazy-console-emojis": "github:ardeshireshghi/lazy-console-emojis#master",
     "node-fetch": "^2.6.0",
