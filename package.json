@@ -13,7 +13,7 @@
   "dependencies": {
     "axios": "^0.19.2",
     "jsdom": "^16.2.1",
-    "lazy-console-emojis": "github:ardeshireshghi/lazy-console-emojis#master",
+    "lazy-console-emojis": "github:ardeshireshghi/lazy-console-emojis#882aecd5b212f4eb34abdcae3c1869f952b34723",
     "node-fetch": "^2.6.0",
     "play-sound": "^1.1.3",
     "puppeteer": "^2.1.1",

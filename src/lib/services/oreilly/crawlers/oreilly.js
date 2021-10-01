@@ -12,8 +12,9 @@ const Selectors = {
   PASSWORD: '[name="password"]',
   LOGIN_SUBMIT: '.orm-Button-root',
   CHAPTER: '#sbo-rt-content',
-  FIRST_PAGE: '.detail-toc > li > a',
-  NEXT_PAGE_LINK: '.next.nav-link'
+  TABLE_OF_CONTENT: '[title="Table of Contents"]',
+  FIRST_PAGE: '[data-testid="toc"] [data-testid*="toc-part"] a',
+  NEXT_PAGE_LINK: '[class*="nextContainer"] a'
 };
 
 const MAX_PAGE_CHANGE_CHECK_RETRY = 20;
@@ -125,8 +126,11 @@ class OreillyBookCrawler extends EventEmitter {
     const page = await this.page();
 
     await this.gotoBookHomePage();
+
+    await page.$eval(Selectors.TABLE_OF_CONTENT, (el) => el.click());
     await page.waitForSelector(Selectors.FIRST_PAGE);
     await page.$eval(Selectors.FIRST_PAGE, (el) => el.click());
+
     await wait(1);
   }
 
@@ -202,8 +206,10 @@ ${metaTags}
 ${linkTags}
 </head>
 <body class="${bodyClassName}">
-  <div id="sbo-rt-content">
-    {{content}}
+  <div style="width: 90%; margin: auto; padding: 1rem;">
+    <div id="sbo-rt-content">
+      {{content}}
+    </div>
   </div>
 <body>
 </html>`;
